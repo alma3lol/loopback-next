@@ -8,6 +8,7 @@ import {
   BindingScope,
   BINDING_METADATA_KEY,
   Context,
+  ContextView,
   createBindingFromClass,
   Getter,
   MetadataInspector,
@@ -67,6 +68,42 @@ describe('extension point', () => {
       registerGreeters('greeters');
       const greeterService = await ctx.get<GreetingService>('greeter-service');
       const greeters = await greeterService.greeters();
+      assertGreeterExtensions(greeters);
+    });
+
+    it('injects a view of extensions', async () => {
+      @extensionPoint('greeters')
+      class GreetingService {
+        @extensions.view()
+        public greetersView: ContextView<Greeter>;
+      }
+
+      // `@extensionPoint` is a sugar decorator for `@bind`
+      const binding = createBindingFromClass(GreetingService, {
+        key: 'greeter-service',
+      });
+      ctx.add(binding);
+      registerGreeters('greeters');
+      const greeterService = await ctx.get<GreetingService>('greeter-service');
+      const greeters = await greeterService.greetersView.values();
+      assertGreeterExtensions(greeters);
+    });
+
+    it('injects a list of extensions', async () => {
+      @extensionPoint('greeters')
+      class GreetingService {
+        @extensions.list()
+        public greeters: Greeter[];
+      }
+
+      // `@extensionPoint` is a sugar decorator for `@bind`
+      const binding = createBindingFromClass(GreetingService, {
+        key: 'greeter-service',
+      });
+      ctx.add(binding);
+      registerGreeters('greeters');
+      const greeterService = await ctx.get<GreetingService>('greeter-service');
+      const greeters = greeterService.greeters;
       assertGreeterExtensions(greeters);
     });
 
